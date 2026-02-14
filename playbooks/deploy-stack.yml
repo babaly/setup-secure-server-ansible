@@ -1,0 +1,10 @@
+---
+# Deploy/update the full Docker stack
+- name: Deploy Docker stack
+  hosts: servers
+  become: true
+  roles:
+    - traefik
+    - crowdsec
+    - monitoring
+    - alerting

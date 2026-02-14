@@ -1,0 +1,18 @@
+---
+- name: Template Loki configuration
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ monitoring_dir }}/loki/loki-config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring
+
+- name: Template Promtail configuration
+  ansible.builtin.template:
+    src: promtail-config.yml.j2
+    dest: "{{ monitoring_dir }}/promtail/promtail-config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring

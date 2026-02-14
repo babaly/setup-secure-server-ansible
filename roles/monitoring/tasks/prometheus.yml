@@ -1,0 +1,18 @@
+---
+- name: Template Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring
+
+- name: Template Prometheus alert rules
+  ansible.builtin.template:
+    src: alert_rules.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/alert_rules.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring

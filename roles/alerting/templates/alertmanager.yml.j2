@@ -1,0 +1,97 @@
+---
+# {{ ansible_managed }}
+
+global:
+{% if email_enabled %}
+  smtp_smarthost: "{{ smtp_host }}:{{ smtp_port }}"
+  smtp_from: "{{ alert_email_from }}"
+  smtp_auth_username: "{{ smtp_user }}"
+  smtp_auth_password: "{{ smtp_password }}"
+  smtp_require_tls: true
+{% endif %}
+
+templates:
+  - /etc/alertmanager/templates/*.tmpl
+
+route:
+  group_by:
+    - alertname
+    - severity
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+{% if telegram_enabled and email_enabled %}
+  receiver: telegram-email
+{% elif telegram_enabled %}
+  receiver: telegram-only
+{% elif email_enabled %}
+  receiver: email-only
+{% endif %}
+  routes:
+    - match:
+        severity: critical
+{% if telegram_enabled and email_enabled %}
+      receiver: telegram-email
+{% elif telegram_enabled %}
+      receiver: telegram-only
+{% elif email_enabled %}
+      receiver: email-only
+{% endif %}
+    - match:
+        severity: warning
+{% if email_enabled %}
+      receiver: email-only
+{% elif telegram_enabled %}
+      receiver: telegram-only
+{% endif %}
+
+receivers:
+{% if telegram_enabled and email_enabled %}
+  - name: telegram-email
+    telegram_configs:
+      - bot_token: "{{ telegram_bot_token }}"
+        chat_id: {{ telegram_chat_id }}
+        parse_mode: HTML
+        message: '{% raw %}{{ template "telegram.message" . }}{% endraw %}'
+    email_configs:
+      - to: "{{ alert_email_to }}"
+        from: "{{ alert_email_from }}"
+        smarthost: "{{ smtp_host }}:{{ smtp_port }}"
+        auth_username: "{{ smtp_user }}"
+        auth_password: "{{ smtp_password }}"
+        require_tls: true
+        html: '{% raw %}{{ template "email.body" . }}{% endraw %}'
+        headers:
+          Subject: '{% raw %}{{ template "email.subject" . }}{% endraw %}'
+{% endif %}
+
+{% if email_enabled %}
+  - name: email-only
+    email_configs:
+      - to: "{{ alert_email_to }}"
+        from: "{{ alert_email_from }}"
+        smarthost: "{{ smtp_host }}:{{ smtp_port }}"
+        auth_username: "{{ smtp_user }}"
+        auth_password: "{{ smtp_password }}"
+        require_tls: true
+        html: '{% raw %}{{ template "email.body" . }}{% endraw %}'
+        headers:
+          Subject: '{% raw %}{{ template "email.subject" . }}{% endraw %}'
+{% endif %}
+
+{% if telegram_enabled %}
+  - name: telegram-only
+    telegram_configs:
+      - bot_token: "{{ telegram_bot_token }}"
+        chat_id: {{ telegram_chat_id }}
+        parse_mode: HTML
+        message: '{% raw %}{{ template "telegram.message" . }}{% endraw %}'
+{% endif %}
+
+inhibit_rules:
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal:
+      - alertname

@@ -1,0 +1,22 @@
+---
+# {{ ansible_managed }}
+
+services:
+  alertmanager:
+    image: prom/alertmanager:v{{ alertmanager_version }}
+    container_name: alertmanager
+    restart: unless-stopped
+    volumes:
+      - {{ alerting_dir }}/config/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - {{ alerting_dir }}/data:/alertmanager
+      - {{ alerting_dir }}/templates:/etc/alertmanager/templates:ro
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.external-url=http://alertmanager:9093
+    networks:
+      - {{ docker_network_name }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

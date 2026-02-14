@@ -1,0 +1,32 @@
+{{ ansible_managed | comment }}
+---
+services:
+  traefik:
+    image: traefik:{{ traefik_version }}
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - {{ traefik_dir }}/traefik.yml:/etc/traefik/traefik.yml:ro
+      - {{ traefik_dir }}/config:/etc/traefik/config:ro
+      - {{ traefik_dir }}/acme:/etc/traefik/acme
+      - {{ traefik_dir }}/logs:/var/log/traefik
+    networks:
+      - {{ docker_network_name }}
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`{{ traefik_dashboard_domain }}`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth,crowdsec-bouncer@docker"
+      # BasicAuth
+      - "traefik.http.middlewares.traefik-auth.basicauth.users={{ traefik_dashboard_user }}:{{ traefik_dashboard_password }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

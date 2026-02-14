@@ -1,0 +1,46 @@
+---
+- name: Create Alertmanager directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ alerting_dir }}"
+    - "{{ alerting_dir }}/config"
+    - "{{ alerting_dir }}/data"
+    - "{{ alerting_dir }}/templates"
+
+- name: Template Alertmanager configuration
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ alerting_dir }}/config/alertmanager.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart alertmanager
+
+- name: Template notification templates
+  ansible.builtin.template:
+    src: notification.tmpl.j2
+    dest: "{{ alerting_dir }}/templates/notification.tmpl"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart alertmanager
+
+- name: Template Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ alerting_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart alertmanager
+
+- name: Deploy Alertmanager with Docker Compose
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ alerting_dir }}"
+  changed_when: false

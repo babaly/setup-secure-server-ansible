@@ -1,0 +1,99 @@
+{{ ansible_managed | comment }}
+---
+services:
+  prometheus:
+    image: prom/prometheus:v{{ prometheus_version }}
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time={{ prometheus_retention }}
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-lifecycle
+    volumes:
+      - {{ monitoring_dir }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - {{ monitoring_dir }}/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - {{ monitoring_dir }}/prometheus/data:/prometheus
+    networks:
+      - {{ docker_network_name }}
+
+  grafana:
+    image: grafana/grafana:{{ grafana_version }}
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: "{{ grafana_admin_user }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+      GF_SERVER_ROOT_URL: "https://{{ grafana_domain }}"
+    volumes:
+      - {{ monitoring_dir }}/grafana/provisioning:/etc/grafana/provisioning:ro
+      - {{ monitoring_dir }}/dashboards:/var/lib/grafana/dashboards:ro
+      - {{ monitoring_dir }}/grafana/data:/var/lib/grafana
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grafana.rule: "Host(`{{ grafana_domain }}`)"
+      traefik.http.routers.grafana.entrypoints: "websecure"
+      traefik.http.routers.grafana.tls.certresolver: "letsencrypt"
+      traefik.http.services.grafana.loadbalancer.server.port: "3000"
+    networks:
+      - {{ docker_network_name }}
+
+  loki:
+    image: grafana/loki:{{ loki_version }}
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - {{ monitoring_dir }}/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - {{ monitoring_dir }}/loki/data:/loki
+    networks:
+      - {{ docker_network_name }}
+
+  promtail:
+    image: grafana/promtail:{{ promtail_version }}
+    container_name: promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - {{ monitoring_dir }}/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - {{ docker_network_name }}
+
+  node-exporter:
+    image: prom/node-exporter:v{{ node_exporter_version }}
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - {{ docker_network_name }}
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v{{ cadvisor_version }}
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - {{ docker_network_name }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

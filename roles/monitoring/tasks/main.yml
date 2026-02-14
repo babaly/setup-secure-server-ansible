@@ -1,0 +1,15 @@
+---
+- name: Create monitoring directories
+  ansible.builtin.include_tasks: directories.yml
+
+- name: Configure Prometheus
+  ansible.builtin.include_tasks: prometheus.yml
+
+- name: Configure Loki and Promtail
+  ansible.builtin.include_tasks: loki.yml
+
+- name: Configure Grafana
+  ansible.builtin.include_tasks: grafana.yml
+
+- name: Deploy monitoring stack
+  ansible.builtin.include_tasks: deploy.yml

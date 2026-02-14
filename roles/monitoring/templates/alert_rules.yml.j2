@@ -1,0 +1,71 @@
+{{ ansible_managed | comment }}
+---
+groups:
+  - name: system
+    rules:
+      - alert: HighCpuUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "CPU usage is above 80% for more than 5 minutes (current value: {% raw %}{{ $value }}{% endraw %}%)."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Memory usage is above 85% for more than 5 minutes (current value: {% raw %}{{ $value }}{% endraw %}%)."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Disk space is below 15% free (current free: {% raw %}{{ $value }}{% endraw %}%)."
+
+  - name: docker
+    rules:
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~".+"}) or (time() - container_last_seen{name=~".+"}) > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {% raw %}{{ $labels.name }}{% endraw %} is down"
+          description: "Container {% raw %}{{ $labels.name }}{% endraw %} has been down for more than 1 minute."
+
+  - name: traefik
+    rules:
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.99, sum(rate(traefik_service_request_duration_seconds_bucket[5m])) by (le, service)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency on {% raw %}{{ $labels.service }}{% endraw %}"
+          description: "99th percentile request latency is above 1s for more than 5 minutes (current value: {% raw %}{{ $value }}{% endraw %}s)."
+
+      - alert: TooManyErrors
+        expr: sum(rate(traefik_service_requests_total{code=~"5.."}[5m])) by (service) / sum(rate(traefik_service_requests_total[5m])) by (service) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate on {% raw %}{{ $labels.service }}{% endraw %}"
+          description: "More than 5% of requests are returning 5xx errors (current rate: {% raw %}{{ $value }}{% endraw %})."
+
+      - alert: SSLCertExpiry
+        expr: (traefik_tls_certs_not_after - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon on {% raw %}{{ $labels.cn }}{% endraw %}"
+          description: "SSL certificate will expire in less than 14 days ({% raw %}{{ $value }}{% endraw %} days remaining)."

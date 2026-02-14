@@ -1,0 +1,5 @@
+---
+- name: Restart alertmanager
+  ansible.builtin.command:
+    cmd: docker compose restart
+    chdir: "{{ alerting_dir }}"

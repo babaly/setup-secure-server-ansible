@@ -1,0 +1,47 @@
+---
+# =============================================================================
+# Global Variables
+# =============================================================================
+
+# --- System ---
+timezone: Europe/Paris
+locale: fr_FR.UTF-8
+swap_size: 2G
+
+# --- User ---
+deploy_user: "{{ vault_new_user }}"
+deploy_group: "{{ vault_new_user }}"
+
+# --- SSH ---
+ssh_port: "{{ vault_new_ssh_port }}"
+
+# --- Domain ---
+base_domain: "{{ vault_base_domain }}"
+
+# --- Docker ---
+docker_compose_version: "2.24.5"
+docker_network_name: traefik-public
+
+# --- Traefik ---
+traefik_version: "3.1"
+traefik_dashboard_domain: "traefik.{{ base_domain }}"
+traefik_acme_email: "{{ vault_acme_email }}"
+
+# --- CrowdSec ---
+crowdsec_version: "1.6"
+crowdsec_bouncer_version: "1.3"
+
+# --- Monitoring ---
+grafana_version: "11.0"
+grafana_domain: "grafana.{{ base_domain }}"
+prometheus_version: "2.53"
+prometheus_retention: "30d"
+loki_version: "3.1"
+promtail_version: "3.1"
+node_exporter_version: "1.8"
+cadvisor_version: "0.49"
+
+# --- Alerting ---
+alerting_enabled: true
+telegram_enabled: true
+email_enabled: true

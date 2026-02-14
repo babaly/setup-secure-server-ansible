@@ -1,0 +1,29 @@
+---
+- name: Template Grafana datasources provisioning
+  ansible.builtin.template:
+    src: datasources.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/datasources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring
+
+- name: Template Grafana dashboards provisioning
+  ansible.builtin.template:
+    src: dashboards.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring
+
+- name: Copy dashboard JSON files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ monitoring_dir }}/dashboards/"
+    owner: root
+    group: root
+    mode: "0644"
+  with_fileglob:
+    - dashboards/*.json
+  notify: Restart monitoring

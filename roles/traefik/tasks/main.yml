@@ -1,0 +1,56 @@
+---
+- name: Create Traefik directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ traefik_dir }}"
+    - "{{ traefik_dir }}/config"
+    - "{{ traefik_dir }}/acme"
+    - "{{ traefik_dir }}/logs"
+
+- name: Template Traefik static configuration
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: "{{ traefik_dir }}/traefik.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart traefik
+
+- name: Template Traefik dynamic configuration
+  ansible.builtin.template:
+    src: dynamic.yml.j2
+    dest: "{{ traefik_dir }}/config/dynamic.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart traefik
+
+- name: Template Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ traefik_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart traefik
+
+- name: Create acme.json with restrictive permissions
+  ansible.builtin.file:
+    path: "{{ traefik_dir }}/acme/acme.json"
+    state: touch
+    mode: "0600"
+    owner: root
+    group: root
+    modification_time: preserve
+    access_time: preserve
+
+- name: Deploy Traefik with Docker Compose
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ traefik_dir }}"
+  changed_when: false

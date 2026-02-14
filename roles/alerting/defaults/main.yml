@@ -1,0 +1,19 @@
+---
+alerting_dir: /opt/alerting
+alertmanager_version: "0.27"
+
+# Telegram notifications
+telegram_enabled: true
+telegram_bot_token: "{{ vault_telegram_bot_token }}"
+telegram_chat_id: "{{ vault_telegram_chat_id }}"
+
+# Email notifications
+email_enabled: true
+smtp_host: "{{ vault_smtp_host }}"
+smtp_port: "{{ vault_smtp_port }}"
+smtp_user: "{{ vault_smtp_user }}"
+smtp_password: "{{ vault_smtp_password }}"
+alert_email_from: "{{ vault_alert_email_from }}"
+alert_email_to: "{{ vault_alert_email_to }}"
+
+docker_network_name: traefik-public

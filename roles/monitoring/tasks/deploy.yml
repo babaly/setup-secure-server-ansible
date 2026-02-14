@@ -1,0 +1,15 @@
+---
+- name: Template Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring
+
+- name: Deploy monitoring stack with Docker Compose
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ monitoring_dir }}"
+  changed_when: false

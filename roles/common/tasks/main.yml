@@ -1,0 +1,15 @@
+---
+- name: Include system tasks
+  ansible.builtin.include_tasks: system.yml
+
+- name: Include user tasks
+  ansible.builtin.include_tasks: users.yml
+
+- name: Include SSH hardening tasks
+  ansible.builtin.include_tasks: ssh.yml
+
+- name: Include firewall tasks
+  ansible.builtin.include_tasks: firewall.yml
+
+- name: Include swap tasks
+  ansible.builtin.include_tasks: swap.yml

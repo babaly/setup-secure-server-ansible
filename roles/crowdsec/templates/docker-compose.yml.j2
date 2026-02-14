@@ -1,0 +1,38 @@
+---
+version: "3.8"
+
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:{{ crowdsec_version }}
+    container_name: crowdsec
+    restart: unless-stopped
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/linux"
+    volumes:
+      - {{ crowdsec_dir }}/config:/etc/crowdsec
+      - {{ crowdsec_dir }}/data:/var/lib/crowdsec/data
+      - /var/log/traefik:/var/log/traefik:ro
+      - /var/log:/var/log:ro
+    networks:
+      - {{ docker_network_name }}
+
+  crowdsec-bouncer-traefik:
+    image: fbonalair/traefik-crowdsec-bouncer:{{ crowdsec_bouncer_version }}
+    container_name: crowdsec-bouncer-traefik
+    restart: unless-stopped
+    depends_on:
+      - crowdsec
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: "{{ crowdsec_bouncer_key }}"
+      CROWDSEC_AGENT_HOST: crowdsec:8080
+    networks:
+      - {{ docker_network_name }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.crowdsec-bouncer.forwardauth.address=http://crowdsec-bouncer-traefik:8080/api/v1/forwardAuth"
+      - "traefik.http.middlewares.crowdsec-bouncer.forwardauth.trustForwardHeader=true"
+      - "traefik.http.services.crowdsec-bouncer-traefik.loadbalancer.server.port=8080"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

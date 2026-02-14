@@ -1,0 +1,8 @@
+---
+# Setup base system only (common + docker)
+- name: Setup base system
+  hosts: servers
+  become: true
+  roles:
+    - common
+    - docker

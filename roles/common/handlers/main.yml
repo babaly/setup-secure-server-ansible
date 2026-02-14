@@ -1,0 +1,10 @@
+---
+- name: restart sshd
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+
+- name: restart ufw
+  ansible.builtin.service:
+    name: ufw
+    state: restarted

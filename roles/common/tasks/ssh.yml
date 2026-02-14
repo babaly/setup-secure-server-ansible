@@ -1,0 +1,24 @@
+---
+- name: Configure SSH port
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?Port "
+    line: "Port {{ ssh_port }}"
+    state: present
+  notify: restart sshd
+
+- name: Disable root login via SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin "
+    line: "PermitRootLogin {{ ssh_permit_root }}"
+    state: present
+  notify: restart sshd
+
+- name: Disable password authentication via SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication "
+    line: "PasswordAuthentication {{ ssh_password_auth }}"
+    state: present
+  notify: restart sshd

@@ -1,0 +1,37 @@
+---
+# System settings
+timezone: "UTC"
+locale: "en_US.UTF-8"
+swap_size: "2G"
+
+# Deploy user (set in vault: vault_new_user)
+deploy_user: "{{ vault_new_user }}"
+deploy_group: "{{ vault_new_user }}"
+
+# SSH settings (set in vault: vault_new_ssh_port)
+ssh_port: "{{ vault_new_ssh_port }}"
+ssh_permit_root: "no"
+ssh_password_auth: "no"
+
+# Common packages to install
+common_packages:
+  - curl
+  - wget
+  - htop
+  - vim
+  - git
+  - unzip
+  - jq
+  - net-tools
+  - fail2ban
+  - ufw
+  - logrotate
+  - ca-certificates
+  - gnupg
+  - apt-transport-https
+
+# Firewall
+ufw_allowed_ports:
+  - "{{ ssh_port }}"
+  - 80
+  - 443

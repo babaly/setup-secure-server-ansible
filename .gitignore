@@ -1,0 +1,10 @@
+*.retry
+*.pyc
+__pycache__/
+.vault_pass
+*.vault_pass
+vault_password_file
+group_vars/all/vault.yml
+host_vars/*/vault.yml
+.env
+*.log

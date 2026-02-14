@@ -1,0 +1,50 @@
+---
+# =============================================================================
+# Main Playbook - Full Server Setup
+# Usage: ansible-playbook site.yml
+# =============================================================================
+- name: Setup complete server infrastructure
+  hosts: servers
+  become: true
+
+  pre_tasks:
+    - name: Verify Ansible version
+      ansible.builtin.assert:
+        that: ansible_version.full is version('2.15', '>=')
+        msg: "Ansible 2.15+ required"
+
+    - name: Gather facts
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+          - network
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: docker
+      tags: [docker]
+
+    - role: traefik
+      tags: [traefik, proxy]
+
+    - role: crowdsec
+      tags: [crowdsec, security]
+
+    - role: monitoring
+      tags: [monitoring, grafana, prometheus, loki]
+
+    - role: alerting
+      tags: [alerting, telegram, email]
+      when: alerting_enabled | default(true)
+
+  post_tasks:
+    - name: Display summary
+      ansible.builtin.debug:
+        msg: |
+          ============================================
+          Server setup complete!
+          Traefik:  https://{{ traefik_dashboard_domain }}
+          Grafana:  https://{{ grafana_domain }}
+          ============================================

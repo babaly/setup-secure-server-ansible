@@ -1,0 +1,41 @@
+{{ "{{" }} define "telegram.message" {{ "}}" }}
+{{ "{{" }} range .Alerts {{ "}}" }}
+{{ "{{" }} if eq .Status "firing" {{ "}}" }}🔥 <b>FIRING</b>{{ "{{" }} else {{ "}}" }}✅ <b>RESOLVED</b>{{ "{{" }} end {{ "}}" }}
+
+<b>Alert:</b> {{ "{{" }} .Labels.alertname {{ "}}" }}
+<b>Severity:</b> {{ "{{" }} if eq .Labels.severity "critical" {{ "}}" }}🔴 Critical{{ "{{" }} else if eq .Labels.severity "warning" {{ "}}" }}🟡 Warning{{ "{{" }} else {{ "}}" }}🔵 {{ "{{" }} .Labels.severity {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+<b>Description:</b> {{ "{{" }} .Annotations.description {{ "}}" }}
+{{ "{{" }} if .Labels.instance {{ "}}" }}<b>Instance:</b> {{ "{{" }} .Labels.instance {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+<b>Time:</b> {{ "{{" }} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{ "}}" }}
+{{ "{{" }} end {{ "}}" }}
+{{ "{{" }} end {{ "}}" }}
+
+{{ "{{" }} define "email.subject" {{ "}}" }}
+[{{ "{{" }} .Status | toUpper {{ "}}" }}] {{ "{{" }} .GroupLabels.alertname {{ "}}" }} - {{ "{{" }} .GroupLabels.severity {{ "}}" }}
+{{ "{{" }} end {{ "}}" }}
+
+{{ "{{" }} define "email.body" {{ "}}" }}
+<html>
+<body>
+<h2>{{ "{{" }} if eq .Status "firing" {{ "}}" }}🔥 Firing Alerts{{ "{{" }} else {{ "}}" }}✅ Resolved Alerts{{ "{{" }} end {{ "}}" }}</h2>
+<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+  <tr>
+    <th>Alert</th>
+    <th>Severity</th>
+    <th>Description</th>
+    <th>Instance</th>
+    <th>Time</th>
+  </tr>
+  {{ "{{" }} range .Alerts {{ "}}" }}
+  <tr>
+    <td>{{ "{{" }} .Labels.alertname {{ "}}" }}</td>
+    <td>{{ "{{" }} .Labels.severity {{ "}}" }}</td>
+    <td>{{ "{{" }} .Annotations.description {{ "}}" }}</td>
+    <td>{{ "{{" }} .Labels.instance {{ "}}" }}</td>
+    <td>{{ "{{" }} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{ "}}" }}</td>
+  </tr>
+  {{ "{{" }} end {{ "}}" }}
+</table>
+</body>
+</html>
+{{ "{{" }} end {{ "}}" }}

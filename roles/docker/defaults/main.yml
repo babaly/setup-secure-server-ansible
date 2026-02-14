@@ -1,0 +1,7 @@
+---
+docker_compose_version: "2.24.5"
+docker_network_name: traefik-public
+docker_log_driver: json-file
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
+docker_users: ["{{ deploy_user }}"]

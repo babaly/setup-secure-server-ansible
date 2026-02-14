@@ -1,0 +1,8 @@
+---
+# Update monitoring stack only
+- name: Update monitoring stack
+  hosts: servers
+  become: true
+  roles:
+    - monitoring
+    - alerting

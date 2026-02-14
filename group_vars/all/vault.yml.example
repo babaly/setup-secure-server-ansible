@@ -1,0 +1,42 @@
+---
+# =============================================================================
+# Vault Variables - Copy to vault.yml and fill in your values
+# Then encrypt with: ansible-vault encrypt group_vars/all/vault.yml
+# =============================================================================
+
+# --- Server ---
+vault_server_ip: "CHANGE_ME"
+vault_base_domain: "example.com"
+vault_acme_email: "admin@example.com"
+
+# --- Initial connection (first run only) ---
+vault_initial_user: "root"
+vault_initial_ssh_port: 22
+
+# --- Target config (after hardening) ---
+vault_new_user: "deploy"
+vault_new_ssh_port: 2222
+
+# --- Traefik ---
+vault_traefik_dashboard_user: "admin"
+vault_traefik_dashboard_password: "CHANGE_ME"
+
+# --- CrowdSec ---
+vault_crowdsec_enroll_key: "CHANGE_ME"
+vault_crowdsec_bouncer_key: "CHANGE_ME"
+
+# --- Grafana ---
+vault_grafana_admin_user: "admin"
+vault_grafana_admin_password: "CHANGE_ME"
+
+# --- Alerting - Telegram ---
+vault_telegram_bot_token: "CHANGE_ME"
+vault_telegram_chat_id: "CHANGE_ME"
+
+# --- Alerting - Email ---
+vault_smtp_host: "smtp.example.com"
+vault_smtp_port: 587
+vault_smtp_user: "alerts@example.com"
+vault_smtp_password: "CHANGE_ME"
+vault_alert_email_from: "alerts@example.com"
+vault_alert_email_to: "admin@example.com"

@@ -1,0 +1,21 @@
+---
+monitoring_dir: /opt/monitoring
+
+# Component versions
+prometheus_version: "2.53"
+grafana_version: "11.1"
+loki_version: "3.1"
+promtail_version: "3.1"
+node_exporter_version: "1.8"
+cadvisor_version: "0.49"
+
+# Prometheus settings
+prometheus_retention: 30d
+
+# Grafana settings
+grafana_domain: "grafana.{{ base_domain }}"
+grafana_admin_user: "{{ vault_grafana_admin_user }}"
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+
+# Docker network
+docker_network_name: traefik-public

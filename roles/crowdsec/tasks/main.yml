@@ -1,0 +1,65 @@
+---
+- name: Create CrowdSec directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ crowdsec_dir }}"
+    - "{{ crowdsec_dir }}/config"
+    - "{{ crowdsec_dir }}/data"
+    - "{{ crowdsec_dir }}/bouncer"
+
+- name: Template acquis.yml
+  ansible.builtin.template:
+    src: acquis.yml.j2
+    dest: "{{ crowdsec_dir }}/config/acquis.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart crowdsec
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ crowdsec_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart crowdsec
+
+- name: Start CrowdSec containers
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ crowdsec_dir }}"
+  register: crowdsec_compose_up
+  changed_when: "'Started' in crowdsec_compose_up.stdout or 'Created' in crowdsec_compose_up.stdout"
+
+- name: Wait for CrowdSec to be healthy
+  ansible.builtin.command:
+    cmd: docker inspect --format='{% raw %}{{ .State.Health.Status }}{% endraw %}' crowdsec
+  register: crowdsec_health
+  until: crowdsec_health.stdout == "healthy"
+  retries: 30
+  delay: 5
+  changed_when: false
+
+- name: Install CrowdSec collections
+  ansible.builtin.command:
+    cmd: "docker exec crowdsec cscli collections install {{ item }}"
+  loop:
+    - crowdsecurity/traefik
+    - crowdsecurity/http-cve
+    - crowdsecurity/linux
+  register: cscli_install
+  changed_when: "'overwrite' not in cscli_install.stderr"
+
+- name: Enroll to CrowdSec console
+  ansible.builtin.command:
+    cmd: "docker exec crowdsec cscli console enroll {{ crowdsec_enroll_key }}"
+  when: crowdsec_enroll_key is defined and crowdsec_enroll_key | length > 0
+  register: crowdsec_enroll
+  changed_when: "'already enrolled' not in crowdsec_enroll.stderr"
+  failed_when: false
