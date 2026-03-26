@@ -1,5 +1,5 @@
 ---
-traefik_version: "3.1"
+traefik_version: "3.3"
 traefik_dir: /opt/traefik
 traefik_acme_email: "{{ vault_acme_email }}"
 traefik_dashboard_enabled: true

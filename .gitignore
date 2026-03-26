@@ -8,3 +8,5 @@ group_vars/all/vault.yml
 host_vars/*/vault.yml
 .env
 *.log
+slack/
+.venv/

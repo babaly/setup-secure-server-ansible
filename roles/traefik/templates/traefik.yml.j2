@@ -30,9 +30,10 @@ certificatesResolvers:
 
 providers:
   docker:
-    endpoint: "unix:///var/run/docker.sock"
+    endpoint: "tcp://docker-socket-proxy:2375"
     exposedByDefault: false
     network: {{ docker_network_name }}
+    httpClientTimeout: 300
   file:
     directory: /etc/traefik/config
     watch: true

@@ -1,6 +1,6 @@
 ---
 crowdsec_version: "1.6"
-crowdsec_bouncer_version: "1.3"
+crowdsec_bouncer_version: "latest"
 crowdsec_dir: /opt/crowdsec
 crowdsec_enroll_key: "{{ vault_crowdsec_enroll_key }}"
 crowdsec_bouncer_key: "{{ vault_crowdsec_bouncer_key }}"

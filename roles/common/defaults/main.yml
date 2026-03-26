@@ -4,10 +4,6 @@ timezone: "UTC"
 locale: "en_US.UTF-8"
 swap_size: "2G"
 
-# Deploy user (set in vault: vault_new_user)
-deploy_user: "{{ vault_new_user }}"
-deploy_group: "{{ vault_new_user }}"
-
 # SSH settings (set in vault: vault_new_ssh_port)
 ssh_port: "{{ vault_new_ssh_port }}"
 ssh_permit_root: "no"

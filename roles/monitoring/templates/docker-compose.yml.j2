@@ -44,7 +44,7 @@ services:
     image: grafana/loki:{{ loki_version }}
     container_name: loki
     restart: unless-stopped
-    command: -config.file=/etc/loki/loki-config.yml
+    command: -config.file=/etc/loki/loki-config.yml -target=all
     volumes:
       - {{ monitoring_dir }}/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - {{ monitoring_dir }}/loki/data:/loki
@@ -81,7 +81,7 @@ services:
       - {{ docker_network_name }}
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v{{ cadvisor_version }}
+    image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     restart: unless-stopped
     privileged: true

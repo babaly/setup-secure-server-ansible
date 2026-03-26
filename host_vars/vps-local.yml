@@ -1,0 +1,6 @@
+---
+# Ces variables surchargent le vault pour l'environnement local/staging
+# Elles permettent à l'inventaire d'utiliser {{ vault_* }} sans dépendre du vault chiffré
+ansible_host: "172.16.3.138"
+ansible_port: 22
+ansible_user: "ubuntu"

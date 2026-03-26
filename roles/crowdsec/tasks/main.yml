@@ -37,11 +37,11 @@
   register: crowdsec_compose_up
   changed_when: "'Started' in crowdsec_compose_up.stdout or 'Created' in crowdsec_compose_up.stdout"
 
-- name: Wait for CrowdSec to be healthy
+- name: Wait for CrowdSec to be running
   ansible.builtin.command:
-    cmd: docker inspect --format='{% raw %}{{ .State.Health.Status }}{% endraw %}' crowdsec
+    cmd: docker inspect --format='{% raw %}{{ .State.Status }}{% endraw %}' crowdsec
   register: crowdsec_health
-  until: crowdsec_health.stdout == "healthy"
+  until: crowdsec_health.stdout == "running"
   retries: 30
   delay: 5
   changed_when: false

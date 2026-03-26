@@ -29,9 +29,9 @@ vault_crowdsec_bouncer_key: "CHANGE_ME"
 vault_grafana_admin_user: "admin"
 vault_grafana_admin_password: "CHANGE_ME"
 
-# --- Alerting - Telegram ---
-vault_telegram_bot_token: "CHANGE_ME"
-vault_telegram_chat_id: "CHANGE_ME"
+# --- Alerting - Slack ---
+vault_slack_webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+vault_slack_channel: "#alerts"
 
 # --- Alerting - Email ---
 vault_smtp_host: "smtp.example.com"

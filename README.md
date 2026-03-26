@@ -22,20 +22,21 @@ Internet
 
 | Composant | Version | Description |
 |-----------|---------|-------------|
-| Traefik | 3.1 | Reverse proxy + Let's Encrypt + TLS 1.2+ |
-| CrowdSec | 1.6 | IPS collaboratif + bouncer Traefik |
-| Prometheus | 2.53 | Collecte de métriques |
-| Grafana | 11.0 | Dashboards et visualisation |
-| Loki | 3.1 | Agrégation de logs |
-| Promtail | 3.1 | Collecte de logs Docker + syslog |
-| Node Exporter | 1.8 | Métriques système |
-| cAdvisor | 0.49 | Métriques containers Docker |
-| Alertmanager | 0.27 | Routage des alertes |
+| Traefik | 3.3 | Reverse proxy + Let's Encrypt + docker-socket-proxy |
+| CrowdSec | latest | IPS collaboratif (engine uniquement) |
+| Prometheus | 2.53.0 | Collecte de métriques |
+| Grafana | 11.0.0 | Dashboards et visualisation |
+| Loki | 3.1.0 | Agrégation de logs (schema tsdb) |
+| Promtail | 3.1.0 | Collecte de logs Docker + syslog |
+| Node Exporter | 1.8.0 | Métriques système |
+| cAdvisor | latest | Métriques containers Docker |
+| Alertmanager | 0.27.0 | Routage des alertes |
+| Docker CE | 27.5.1 | **Pinné** — Docker 29.x incompatible avec Traefik |
 
 ## Prérequis
 
-- **Machine locale** : Python 3.10+, Ansible 2.15+
-- **Serveur cible** : Debian 12 / Ubuntu 22.04+, accès SSH root ou sudo
+- **Machine locale** : Ansible 2.15+ (via WSL sur Windows)
+- **Serveur cible** : Ubuntu 22.04 / 24.04 LTS, accès SSH root ou sudo
 
 ### Installation des dépendances
 
@@ -83,9 +84,9 @@ Modifier `group_vars/all/vault.yml` avec vos valeurs :
 
 ```yaml
 # Serveur
-vault_server_ip: "203.0.113.10"
-vault_base_domain: "mondomaine.fr"
-vault_acme_email: "admin@mondomaine.fr"
+vault_server_ip: "X.X.X.X"
+vault_base_domain: "votre-domaine.fr"
+vault_acme_email: "admin@votre-domaine.fr"
 
 # Connexion initiale (premier run)
 vault_initial_user: "root"
@@ -96,14 +97,20 @@ vault_new_user: "deploy"
 vault_new_ssh_port: 2222
 
 # Services
-vault_traefik_dashboard_password: "mot_de_passe_fort"
-vault_crowdsec_enroll_key: "cle_crowdsec"
-vault_crowdsec_bouncer_key: "cle_bouncer"
-vault_grafana_admin_password: "mot_de_passe_grafana"
-vault_telegram_bot_token: "123456:ABC..."
-vault_telegram_chat_id: "-1001234567890"
-vault_smtp_host: "smtp.example.com"
-vault_smtp_password: "mot_de_passe_smtp"
+vault_traefik_dashboard_user: "admin"
+vault_traefik_dashboard_password: "<hash_bcrypt>"
+vault_crowdsec_enroll_key: "<cle_crowdsec_console>"
+vault_crowdsec_bouncer_key: "<cle_bouncer>"
+vault_grafana_admin_user: "admin"
+vault_grafana_admin_password: "<hash_bcrypt>"
+vault_slack_webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+vault_slack_channel: "#alerts"
+vault_smtp_host: "smtp.votre-domaine.fr"
+vault_smtp_port: 587
+vault_smtp_user: "user@votre-domaine.fr"
+vault_smtp_password: "<mot_de_passe_smtp>"
+vault_alert_email_from: "noreply@votre-domaine.fr"
+vault_alert_email_to: "admin@votre-domaine.fr"
 ```
 
 Puis chiffrer le fichier :
@@ -223,8 +230,8 @@ Hardening du serveur :
 
 ### alerting
 - Alertmanager avec routage par sévérité
-- **Critical** -> Telegram + Email
-- **Warning** -> Email uniquement
+- **Critical** -> Slack + Email
+- **Warning** -> Slack uniquement
 - Templates HTML pour les notifications
 - Alertes configurées : CPU >80%, RAM >85%, disque <15%, container down, latence élevée, erreurs 5xx, certificat SSL expirant
 

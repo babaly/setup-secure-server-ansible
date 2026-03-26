@@ -1,12 +1,13 @@
-{{ "{{" }} define "telegram.message" {{ "}}" }}
-{{ "{{" }} range .Alerts {{ "}}" }}
-{{ "{{" }} if eq .Status "firing" {{ "}}" }}🔥 <b>FIRING</b>{{ "{{" }} else {{ "}}" }}✅ <b>RESOLVED</b>{{ "{{" }} end {{ "}}" }}
+{{ "{{" }} define "slack.title" {{ "}}" }}
+{{ "{{" }} if eq .Status "firing" {{ "}}" }}:fire: [FIRING] {{ "{{" }} .GroupLabels.alertname {{ "}}" }}{{ "{{" }} else {{ "}}" }}:white_check_mark: [RESOLVED] {{ "{{" }} .GroupLabels.alertname {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+{{ "{{" }} end {{ "}}" }}
 
-<b>Alert:</b> {{ "{{" }} .Labels.alertname {{ "}}" }}
-<b>Severity:</b> {{ "{{" }} if eq .Labels.severity "critical" {{ "}}" }}🔴 Critical{{ "{{" }} else if eq .Labels.severity "warning" {{ "}}" }}🟡 Warning{{ "{{" }} else {{ "}}" }}🔵 {{ "{{" }} .Labels.severity {{ "}}" }}{{ "{{" }} end {{ "}}" }}
-<b>Description:</b> {{ "{{" }} .Annotations.description {{ "}}" }}
-{{ "{{" }} if .Labels.instance {{ "}}" }}<b>Instance:</b> {{ "{{" }} .Labels.instance {{ "}}" }}{{ "{{" }} end {{ "}}" }}
-<b>Time:</b> {{ "{{" }} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{ "}}" }}
+{{ "{{" }} define "slack.text" {{ "}}" }}
+{{ "{{" }} range .Alerts {{ "}}" }}
+*Severity:* {{ "{{" }} if eq .Labels.severity "critical" {{ "}}" }}:red_circle: Critical{{ "{{" }} else if eq .Labels.severity "warning" {{ "}}" }}:warning: Warning{{ "{{" }} else {{ "}}" }}:large_blue_circle: {{ "{{" }} .Labels.severity {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+*Description:* {{ "{{" }} .Annotations.description {{ "}}" }}
+{{ "{{" }} if .Labels.instance {{ "}}" }}*Instance:* {{ "{{" }} .Labels.instance {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+*Time:* {{ "{{" }} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{ "}}" }}
 {{ "{{" }} end {{ "}}" }}
 {{ "{{" }} end {{ "}}" }}
 

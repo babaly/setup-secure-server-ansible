@@ -1,11 +1,11 @@
 ---
 alerting_dir: /opt/alerting
-alertmanager_version: "0.27"
+alertmanager_version: "0.27.0"
 
-# Telegram notifications
-telegram_enabled: true
-telegram_bot_token: "{{ vault_telegram_bot_token }}"
-telegram_chat_id: "{{ vault_telegram_chat_id }}"
+# Slack notifications
+slack_enabled: true
+slack_webhook_url: "{{ vault_slack_webhook_url }}"
+slack_channel: "{{ vault_slack_channel }}"
 
 # Email notifications
 email_enabled: true
