@@ -32,11 +32,14 @@ Internet
 | cAdvisor | latest | Métriques containers Docker |
 | Alertmanager | 0.27.0 | Routage des alertes |
 | Docker CE | 27.5.1 | **Pinné** — Docker 29.x incompatible avec Traefik |
+| CrowdSec Bouncer | plugin v1.4.2 | Plugin natif Traefik pour blocage actif des IPs |
 
 ## Prérequis
 
 - **Machine locale** : Ansible 2.15+ (via WSL sur Windows)
 - **Serveur cible** : Ubuntu 22.04 / 24.04 LTS, accès SSH root ou sudo
+- **Compte Slack** : workspace avec droits de création d'application (pour les alertes)
+- **Compte CrowdSec** : compte gratuit sur [app.crowdsec.net](https://app.crowdsec.net) (pour la console et le bouncer)
 
 ### Installation des dépendances
 
@@ -75,6 +78,108 @@ setup-server/
     │   └── files/dashboards/       # 4 dashboards JSON
     └── alerting/                   # Alertmanager + notifications
 ```
+
+## Obtenir les clés et tokens externes
+
+### Webhook Slack
+
+Les alertes (Alertmanager + CrowdSec) sont envoyées via un **Incoming Webhook Slack**.
+
+**Étapes pour créer le webhook :**
+
+1. Aller sur [api.slack.com/apps](https://api.slack.com/apps) et cliquer **Create New App**
+2. Choisir **From scratch**, donner un nom (ex: `Server Alerts`) et sélectionner votre workspace
+3. Dans le menu de gauche, cliquer sur **Incoming Webhooks**
+4. Activer le toggle **Activate Incoming Webhooks**
+5. Cliquer **Add New Webhook to Workspace**
+6. Sélectionner le channel Slack qui recevra les alertes (ex: `#alerts`) et cliquer **Allow**
+7. Copier l'URL générée — elle ressemble à :
+
+   ```text
+   https://hooks.slack.com/services/<WORKSPACE_ID>/<CHANNEL_ID>/<TOKEN>
+   ```
+
+8. Coller cette URL dans le vault sous `vault_slack_webhook_url`
+
+> Le même webhook est utilisé à la fois par Alertmanager (alertes système) et par CrowdSec (bans d'IP).
+
+---
+
+### Clé d'enrôlement CrowdSec (console)
+
+La **clé d'enrôlement** permet de connecter votre instance CrowdSec à la console cloud [app.crowdsec.net](https://app.crowdsec.net) pour visualiser les événements et bénéficier de la threat intelligence collaborative.
+
+**Étapes :**
+
+1. Créer un compte gratuit sur [app.crowdsec.net](https://app.crowdsec.net)
+2. Une fois connecté, aller dans **Instances** > **Add Instance**
+3. La console affiche une commande du type :
+
+   ```bash
+   cscli console enroll <VOTRE_CLÉ>
+   ```
+
+4. Copier uniquement la clé (la partie après `enroll`)
+5. La coller dans le vault sous `vault_crowdsec_enroll_key`
+
+> Cette étape est optionnelle. Si vous ne souhaitez pas utiliser la console, laissez `vault_crowdsec_enroll_key` vide.
+
+---
+
+### Clé bouncer CrowdSec (plugin Traefik)
+
+Le **bouncer** est le composant qui permet à Traefik de bloquer activement les IPs identifiées par CrowdSec. Il communique avec le moteur CrowdSec via une clé API locale.
+
+**Étapes :**
+
+1. Une fois CrowdSec déployé sur le serveur, se connecter en SSH :
+
+   ```bash
+   ssh -p 2222 deploy@votre-serveur.fr
+   ```
+
+2. Générer la clé bouncer :
+
+   ```bash
+   docker exec crowdsec cscli bouncers add traefik-bouncer
+   ```
+
+3. La commande retourne une clé API, par exemple :
+
+   ```text
+   Api key for 'traefik-bouncer':
+   abc123def456ghi789jkl012mno345pqr678stu901
+   ```
+
+4. Copier cette clé et la coller dans le vault sous `vault_crowdsec_bouncer_key`
+
+5. Mettre à jour le vault chiffré et relancer le déploiement Traefik :
+
+   ```bash
+   ansible-vault edit group_vars/all/vault.yml
+   ansible-playbook site.yml --tags traefik --ask-vault-pass
+   ```
+
+> **Important** : cette clé doit être générée **après** le premier déploiement de CrowdSec. Elle ne peut pas être connue à l'avance.
+
+---
+
+### Mot de passe bcrypt (Traefik dashboard et Grafana)
+
+Traefik et Grafana utilisent des mots de passe hashés en **bcrypt**. Pour générer le hash :
+
+```bash
+# Installer htpasswd si nécessaire
+sudo apt install apache2-utils
+
+# Générer le hash (remplacer "votre_mot_de_passe")
+htpasswd -nbB admin "votre_mot_de_passe"
+# Exemple de sortie : admin:$2y$05$abc123...
+```
+
+Copier uniquement la partie après `admin:` dans le vault sous `vault_traefik_dashboard_password` et `vault_grafana_admin_password`.
+
+---
 
 ## Configuration
 
@@ -216,9 +321,10 @@ Hardening du serveur :
 
 ### crowdsec
 - CrowdSec engine avec acquisition logs Traefik
-- Bouncer Traefik (forwardAuth middleware)
+- Plugin natif Traefik (`crowdsec-bouncer-traefik-plugin v1.4.2`) pour blocage actif
 - Collections : traefik, http-cve, linux
 - Enrôlement console CrowdSec (optionnel)
+- Notifications Slack lors des bans d'IP (webhook configurable)
 
 ### monitoring
 - **Prometheus** : scrape node-exporter, cAdvisor, Traefik (15s)
@@ -234,6 +340,7 @@ Hardening du serveur :
 - **Warning** -> Slack uniquement
 - Templates HTML pour les notifications
 - Alertes configurées : CPU >80%, RAM >85%, disque <15%, container down, latence élevée, erreurs 5xx, certificat SSL expirant
+- **CrowdSec** -> notifications Slack dédiées lors des bans d'IP
 
 ## Dashboards Grafana
 
@@ -258,8 +365,9 @@ Hardening du serveur :
 - SSH durci (port custom, clé uniquement, pas de root)
 - UFW activé (whitelist ports)
 - TLS 1.2+ avec HSTS
-- CrowdSec IPS collaboratif
+- CrowdSec IPS collaboratif + plugin Traefik natif (blocage actif)
+- Notifications Slack pour les bans d'IP (CrowdSec + Alertmanager)
 - Headers de sécurité sur toutes les réponses
 - Rate limiting sur Traefik
 - Secrets chiffrés avec Ansible Vault
-- Socket Docker monté en lecture seule
+- Docker socket exposé via proxy read-only (docker-socket-proxy)

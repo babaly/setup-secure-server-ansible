@@ -9,6 +9,7 @@
   loop:
     - "{{ crowdsec_dir }}"
     - "{{ crowdsec_dir }}/config"
+    - "{{ crowdsec_dir }}/config/notifications"
     - "{{ crowdsec_dir }}/data"
     - "{{ crowdsec_dir }}/bouncer"
 
@@ -55,6 +56,24 @@
     - crowdsecurity/linux
   register: cscli_install
   changed_when: "'overwrite' not in cscli_install.stderr"
+
+- name: Template Slack notification config
+  ansible.builtin.template:
+    src: slack.yaml.j2
+    dest: "{{ crowdsec_dir }}/config/notifications/slack.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart crowdsec
+
+- name: Template CrowdSec profiles
+  ansible.builtin.template:
+    src: profiles.yaml.j2
+    dest: "{{ crowdsec_dir }}/config/profiles.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart crowdsec
 
 - name: Enroll to CrowdSec console
   ansible.builtin.command:

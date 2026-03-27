@@ -1,0 +1,12 @@
+{{ ansible_managed | comment }}
+---
+type: slack
+name: slack-plugin
+log_level: info
+enabled: true
+output_filter: "Alert.Remediation == true && Alert.GetScope() == \"Ip\""
+format: |
+  {
+    "text": ":rotating_light: *CrowdSec Alert* :rotating_light:\n*IP:* {{ "{{" }}range .Decisions{{ "}}" }}{{ "{{" }}.Value{{ "}}" }}{{ "{{" }}end{{ "}}" }}\n*Reason:* {{ "{{" }}range .Decisions{{ "}}" }}{{ "{{" }}.Scenario{{ "}}" }}{{ "{{" }}end{{ "}}" }}\n*Action:* {{ "{{" }}range .Decisions{{ "}}" }}{{ "{{" }}.Type{{ "}}" }}{{ "{{" }}end{{ "}}" }}\n*Duration:* {{ "{{" }}range .Decisions{{ "}}" }}{{ "{{" }}.Duration{{ "}}" }}{{ "{{" }}end{{ "}}" }}\n*Country:* {{ "{{" }}.Alert.GetSources{{ "}}" }}"
+  }
+url: "{{ crowdsec_slack_webhook_url }}"

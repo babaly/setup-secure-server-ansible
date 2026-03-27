@@ -4,4 +4,5 @@ crowdsec_bouncer_version: "latest"
 crowdsec_dir: /opt/crowdsec
 crowdsec_enroll_key: "{{ vault_crowdsec_enroll_key }}"
 crowdsec_bouncer_key: "{{ vault_crowdsec_bouncer_key }}"
+crowdsec_slack_webhook_url: "{{ vault_slack_webhook_url }}"
 docker_network_name: traefik-public
