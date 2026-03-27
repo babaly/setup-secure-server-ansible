@@ -38,6 +38,12 @@ providers:
     directory: /etc/traefik/config
     watch: true
 
+experimental:
+  plugins:
+    crowdsec-bouncer-traefik-plugin:
+      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+      version: "v1.4.2"
+
 log:
   level: {{ traefik_log_level }}
   filePath: /var/log/traefik/traefik.log

@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
       - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
-      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth,crowdsec@file"
       # BasicAuth
       - "traefik.http.middlewares.traefik-auth.basicauth.users={{ traefik_dashboard_user }}:{{ traefik_dashboard_password }}"
 

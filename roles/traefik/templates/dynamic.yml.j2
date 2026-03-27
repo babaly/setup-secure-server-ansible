@@ -31,3 +31,11 @@ http:
       rateLimit:
         average: 100
         burst: 50
+
+    crowdsec:
+      plugin:
+        crowdsec-bouncer-traefik-plugin:
+          enabled: true
+          crowdsecLapiKey: "{{ crowdsec_bouncer_key }}"
+          crowdsecLapiHost: "crowdsec:8080"
+          crowdsecMode: "live"
