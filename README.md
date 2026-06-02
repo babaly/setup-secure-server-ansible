@@ -4,7 +4,7 @@ Infrastructure as Code pour le provisionnement automatique d'un serveur VPS avec
 
 ## Architecture
 
-```
+```text
 Internet
    |
    v
@@ -15,7 +15,7 @@ Internet
    +-- Grafana    (dashboards)
    +-- Prometheus (métriques)
    +-- Loki       (logs)
-   +-- Alertmanager (alertes Telegram + Email)
+   +-- Alertmanager (alertes Slack + Email)
 ```
 
 ## Stack technique
@@ -31,8 +31,8 @@ Internet
 | Node Exporter | 1.8.0 | Métriques système |
 | cAdvisor | latest | Métriques containers Docker |
 | Alertmanager | 0.27.0 | Routage des alertes |
-| Docker CE | 27.5.1 | **Pinné** — Docker 29.x incompatible avec Traefik |
-| CrowdSec Bouncer | plugin v1.4.2 | Plugin natif Traefik pour blocage actif des IPs |
+| Docker CE | 27.5.1 | **Pinné** — Docker 28.x+ incompatible avec Traefik v3.1 (API version trop récente) |
+| CrowdSec Bouncer | plugin v1.4.2 | Plugin natif Traefik pour blocage actif des IPs + page 403 personnalisée |
 
 ## Prérequis
 
@@ -50,7 +50,7 @@ ansible-galaxy install -r requirements.yml
 
 ## Structure du projet
 
-```
+```text
 setup-server/
 ├── ansible.cfg                     # Configuration Ansible
 ├── site.yml                        # Playbook principal
@@ -298,7 +298,9 @@ ansible-playbook site.yml --vault-password-file .vault_pass
 ## Rôles
 
 ### common
+
 Hardening du serveur :
+
 - Mise à jour système et installation des paquets essentiels
 - Création utilisateur `deploy` avec sudo NOPASSWD
 - Durcissement SSH (changement de port, désactivation root/password)
@@ -306,27 +308,33 @@ Hardening du serveur :
 - Configuration swap
 
 ### docker
-- Installation Docker CE depuis le dépôt officiel
+
+- Installation Docker CE **27.5.1 pinné** depuis le dépôt officiel
+- **Important** : Docker 28.x+ utilise une API Docker trop récente (minimum v1.40 requis par Traefik v3.1). Si Docker est déjà installé en version récente, le playbook effectue un downgrade automatique vers 27.5.1 via `allow_downgrade: true`. En cas d'échec, downgrader manuellement : `sudo apt-get install -y --allow-downgrades docker-ce=5:27.5.1-1~ubuntu.24.04~noble docker-ce-cli=5:27.5.1-1~ubuntu.24.04~noble`
 - Configuration daemon (logging, address pools)
 - Création du réseau `traefik-public`
 
 ### traefik
+
 - Traefik v3 avec Let's Encrypt automatique
 - Redirection HTTP -> HTTPS
 - TLS 1.2 minimum avec cipher suites sécurisées
 - Headers de sécurité (HSTS, XSS, CSP)
 - Rate limiting (100 req/s, burst 50)
-- Dashboard protégé par Basic Auth
+- Dashboard protégé par Basic Auth (mot de passe bcrypt)
 - Métriques Prometheus sur :8082
 
 ### crowdsec
+
 - CrowdSec engine avec acquisition logs Traefik
 - Plugin natif Traefik (`crowdsec-bouncer-traefik-plugin v1.4.2`) pour blocage actif
 - Collections : traefik, http-cve, linux
 - Enrôlement console CrowdSec (optionnel)
 - Notifications Slack lors des bans d'IP (webhook configurable)
+- Page 403 personnalisée (`roles/traefik/files/error-pages/403.html`) servie directement par le plugin via `banHTMLFilePath`
 
 ### monitoring
+
 - **Prometheus** : scrape node-exporter, cAdvisor, Traefik (15s)
 - **Grafana** : provisionnement automatique datasources + dashboards
 - **Loki** : agrégation logs avec schema v13
@@ -335,6 +343,7 @@ Hardening du serveur :
 - **cAdvisor** : métriques par container
 
 ### alerting
+
 - Alertmanager avec routage par sévérité
 - **Critical** -> Slack + Email
 - **Warning** -> Slack uniquement

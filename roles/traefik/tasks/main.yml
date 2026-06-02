@@ -11,6 +11,15 @@
     - "{{ traefik_dir }}/config"
     - "{{ traefik_dir }}/acme"
     - "{{ traefik_dir }}/logs"
+    - "{{ traefik_dir }}/error-pages"
+
+- name: Copy error pages
+  ansible.builtin.copy:
+    src: error-pages/403.html
+    dest: "{{ traefik_dir }}/error-pages/403.html"
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Template Traefik static configuration
   ansible.builtin.template:

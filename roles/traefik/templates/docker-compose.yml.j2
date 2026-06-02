@@ -31,6 +31,7 @@ services:
       - {{ traefik_dir }}/config:/etc/traefik/config:ro
       - {{ traefik_dir }}/acme:/etc/traefik/acme
       - {{ traefik_dir }}/logs:/var/log/traefik
+      - {{ traefik_dir }}/error-pages:/etc/traefik/error-pages:ro
     networks:
       - {{ docker_network_name }}
       - socket-proxy
